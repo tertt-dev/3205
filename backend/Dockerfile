@@ -1,17 +1,23 @@
-FROM node:18-alpine
+FROM node:18-slim
 
 WORKDIR /app
+
+RUN apt-get update && \
+    apt-get install -y openssl && \
+    rm -rf /var/lib/apt/lists/*
 
 COPY package.json ./
 COPY prisma ./prisma/
 
-RUN yarn global add typescript
+RUN yarn global add typescript prisma
 RUN yarn install
-RUN npx prisma generate
 
 COPY . .
+
+ENV PRISMA_CLIENT_ENGINE_TYPE="binary"
+RUN prisma generate
 RUN tsc
 
 EXPOSE 4000
 
-CMD npx prisma migrate deploy && yarn start 
+CMD prisma migrate deploy && yarn start 

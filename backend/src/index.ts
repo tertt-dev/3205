@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { UrlService } from './services/urlService';
 import { CreateShortUrlSchema } from './types';
+import { ZodError } from 'zod';
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -13,13 +14,28 @@ app.use(express.json());
 // Create short URL
 app.post('/shorten', async (req, res) => {
   try {
+    console.log('Received request body:', JSON.stringify(req.body, null, 2));
     const validatedData = CreateShortUrlSchema.parse(req.body);
+    console.log('Validated data:', JSON.stringify(validatedData, null, 2));
     const shortUrl = await urlService.createShortUrl(validatedData);
     res.json({ shortUrl });
   } catch (error) {
-    if (error instanceof Error) {
+    console.error('Error details:', error);
+    if (error instanceof ZodError) {
+      const validationErrors = error.errors.map(err => ({
+        path: err.path.join('.'),
+        message: err.message
+      }));
+      console.error('Validation errors:', JSON.stringify(validationErrors, null, 2));
+      res.status(400).json({ 
+        error: 'Validation failed',
+        details: validationErrors
+      });
+    } else if (error instanceof Error) {
+      console.error('Error message:', error.message);
       res.status(400).json({ error: error.message });
     } else {
+      console.error('Unknown error:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   }
