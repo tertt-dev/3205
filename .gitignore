@@ -57,4 +57,7 @@ backend/dist/
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
-.pnp.* 
+.pnp.*
+
+# Keep yarn.lock files
+!**/yarn.lock 
